@@ -13,10 +13,6 @@ import { setSession as setReduxSession } from '@/store/slices/authSlice';
 import { store } from '@/store/store';
 import { Provider } from 'react-redux';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [session, setSession] = useState<any>(null);
@@ -55,6 +51,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>

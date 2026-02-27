@@ -68,7 +68,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                         >
                             {options.tabBarIcon && options.tabBarIcon({
                                 focused: isFocused,
-                                color: isFocused ? '#000000' : '#8A8A8E',
+                                color: isFocused ? '#ffffff' : '#8A8A8E',
                                 size: 28
                             })}
                         </Pressable>
