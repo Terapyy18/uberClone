@@ -39,7 +39,7 @@ export default function Page() {
           setError(error.message);
         }
       } else {
-        router.replace('/(tabs)/profile' as any);
+        router.replace('/(tabs)/MapView' as any);
       }
     } catch (err: any) {
       setError('Une erreur est survenue lors de la connexion. Veuillez réessayer.');
@@ -95,7 +95,7 @@ export default function Page() {
         if (updateError) throw updateError;
 
         setShowForgotPassword(false);
-        router.replace('/(tabs)' as any);
+        router.replace('/(tabs)/MapView' as any);
       } else {
         setResetError('La vérification a échoué. Code invalide ?');
       }

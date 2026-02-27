@@ -87,6 +87,8 @@ const styles = StyleSheet.create({
         right: 24,
         height: 65,
         justifyContent: 'center',
+        zIndex: 100,
+        elevation: 10,
     },
     glassContainer: {
         ...StyleSheet.absoluteFillObject,
