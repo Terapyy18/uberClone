@@ -3,12 +3,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { GlassContainer, GlassView } from 'expo-glass-effect';
 import * as Location from 'expo-location';
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import MapView, { Marker } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectDestination, selectDistance, selectOrigin, setDestination, setDistance, setOrigin } from '../../store/slices/navSlice';
+import { selectDestination, selectDistance, selectDuration, selectOrigin, selectTravelMode, setDestination, setDistance, setDuration, setOrigin, setTravelMode } from '../../store/slices/navSlice';
 
 const uberOptions = [
   {
@@ -39,6 +40,10 @@ export default function MapsViewScreen() {
   const origin = useSelector(selectOrigin);
   const destination = useSelector(selectDestination);
   const distance = useSelector(selectDistance);
+  const duration = useSelector(selectDuration);
+  const travelMode = useSelector(selectTravelMode);
+
+  const mapRef = React.useRef<MapView>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -59,34 +64,15 @@ export default function MapsViewScreen() {
     })();
   }, []);
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2)
-      ;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; // Distance in km
-    return d;
-  };
-
   React.useEffect(() => {
     if (!origin || !destination) return;
-    const dist = calculateDistance(
-      origin.location.lat,
-      origin.location.lng,
-      destination.location.lat,
-      destination.location.lng
-    );
-    dispatch(setDistance(dist));
+    // Route calculation will be handled by MapViewDirections
   }, [origin, destination]);
 
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         showsUserLocation
         initialRegion={
@@ -120,7 +106,52 @@ export default function MapsViewScreen() {
             identifier="destination"
           />
         )}
+        {origin && destination && (
+          <MapViewDirections
+            origin={{
+              latitude: origin.location.lat,
+              longitude: origin.location.lng,
+            }}
+            destination={{
+              latitude: destination.location.lat,
+              longitude: destination.location.lng,
+            }}
+            apikey={GOOGLE_MAPS_APIKEY}
+            strokeWidth={3}
+            strokeColor="black"
+            mode={travelMode}
+            onReady={(result) => {
+              dispatch(setDistance(result.distance));
+              dispatch(setDuration(result.duration));
+              mapRef.current?.fitToCoordinates(result.coordinates, {
+                edgePadding: { right: 50, bottom: 50, left: 50, top: 150 },
+              });
+            }}
+          />
+        )}
       </MapView>
+
+      {/* Travel Mode Selector */}
+      <View style={[styles.travelModeContainer, { top: insets.top ? insets.top + 70 : 90 }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.travelModeScroll}>
+          {(['DRIVING', 'WALKING', 'BICYCLING', 'TRANSIT'] as const).map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[styles.modeButton, travelMode === mode && styles.modeButtonSelected]}
+              onPress={() => dispatch(setTravelMode(mode))}
+            >
+              <Ionicons
+                name={mode === 'DRIVING' ? 'car' : mode === 'WALKING' ? 'walk' : mode === 'BICYCLING' ? 'bicycle' : 'bus'}
+                size={20}
+                color={travelMode === mode ? '#fff' : '#000'}
+              />
+              <Text style={[styles.modeText, travelMode === mode && styles.modeTextSelected]}>
+                {mode === 'DRIVING' ? 'Voiture' : mode === 'WALKING' ? 'Marche' : mode === 'BICYCLING' ? 'Vélo' : 'Commun'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
 
 
@@ -205,13 +236,6 @@ export default function MapsViewScreen() {
             }}
           />
         </View>
-        {distance !== null && (
-          <View style={styles.distanceContainer}>
-            <Text style={styles.distanceText}>
-              Distance: {distance.toFixed(2)} km
-            </Text>
-          </View>
-        )}
       </View>
 
 
@@ -219,45 +243,30 @@ export default function MapsViewScreen() {
       {/* Options Overlay */}
       <View style={styles.optionsContainer} pointerEvents="box-none">
         {/* <FlatList
-          data={uberOptions}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.flatListContent}
-          renderItem={({ item }) => {
-            const isSelected = selected === item.id;
-            return (
-              <TouchableOpacity
-                onPress={() => setSelected(item.id)}
-                style={[
-                  styles.optionCard,
-                  isSelected && styles.optionCardSelected
-                ]}
-                activeOpacity={0.8}
-              >
-                <View style={styles.imageContainer}>
-                  <Image
-                    style={styles.optionImage}
-                    source={{ uri: item.image }}
-                    resizeMode="contain"
-                  />
-                </View>
-                <View style={styles.cardContent}>
-                  <Text style={[styles.optionTitle, isSelected && styles.textSelected]}>
-                    {item.title}
-                  </Text>
-                  <View style={styles.priceRow}>
-                    <Ionicons name="person" size={12} color={isSelected ? 'black' : '#6b7280'} />
-                    <Text style={[styles.capacityText, isSelected && styles.textSelected]}>
-                      {item.id === '2' ? '6' : '4'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
+          // ... (rest of commented code)
         /> */}
       </View>
+
+      {/* Bottom Info Panel */}
+      {distance !== null && duration !== null && (
+        <View style={[styles.bottomInfoPanel, { bottom: 100 }]}>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoLabel}>Distance</Text>
+            <Text style={styles.infoValue}>{distance.toFixed(1)} km</Text>
+          </View>
+          <View style={styles.infoDivider} />
+          <View style={styles.infoBox}>
+            <Text style={styles.infoLabel}>Temps estimé</Text>
+            <Text style={styles.infoValue}>
+              {duration > 60
+                ? `${Math.floor(duration / 60)} h ${Math.ceil(duration % 60)} min`
+                : `${Math.ceil(duration)} min`
+              }
+            </Text>
+          </View>
+        </View>
+      )}
+
     </View>
   );
 }
@@ -266,18 +275,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  distanceContainer: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 8,
-  },
-  distanceText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
   map: {
     ...StyleSheet.absoluteFillObject,
@@ -401,5 +398,83 @@ const styles = StyleSheet.create({
   },
   textSelected: {
     color: 'black',
+  },
+  travelModeContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 15,
+  },
+  travelModeScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  modeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modeButtonSelected: {
+    backgroundColor: '#000',
+    borderColor: '#000',
+  },
+  modeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+  },
+  modeTextSelected: {
+    color: '#fff',
+  },
+  bottomInfoPanel: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 20,
+  },
+  infoBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  infoDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#e5e7eb',
+    marginHorizontal: 16,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  infoValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
   },
 });
