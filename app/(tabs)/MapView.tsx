@@ -19,7 +19,7 @@ import {
 import { useAppSelector } from '@/store/store';
 import * as Location from 'expo-location';
 import { useNavigation, useRouter } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,6 +31,7 @@ export default function MapViewScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const mapRef = useRef<MapView>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const { session } = useAppSelector((state) => state.auth);
   const origin = useSelector(selectOrigin);
@@ -39,15 +40,29 @@ export default function MapViewScreen() {
   const duration = useSelector(selectDuration);
   const travelMode = useSelector(selectTravelMode);
 
-  // Get current location on mount
+  // Get current location on mount + reverse geocode pour l'adresse réelle
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
       const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      // Reverse geocoding pour récupérer l'adresse lisible
+      let description = 'Position actuelle';
+      try {
+        const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (place) {
+          const parts = [place.streetNumber, place.street, place.city].filter(Boolean);
+          description = parts.length > 0 ? parts.join(' ') : (place.name || 'Position actuelle');
+        }
+      } catch (_) {
+        // En cas d'erreur de geocodage, on garde le fallback
+      }
+
       dispatch(setOrigin({
-        location: { lat: location.coords.latitude, lng: location.coords.longitude },
-        description: 'Current Location',
+        location: { lat: latitude, lng: longitude },
+        description,
       }));
     })();
   }, []);
@@ -83,18 +98,21 @@ export default function MapViewScreen() {
         }}
       />
 
-      <TravelModeSelector
-        travelMode={travelMode}
-        onSelect={(mode) => dispatch(setTravelMode(mode))}
-        topOffset={insets.top ? insets.top + 70 : 90}
-      />
+      {!isSearchFocused && (
+        <TravelModeSelector
+          travelMode={travelMode}
+          onSelect={(mode) => dispatch(setTravelMode(mode))}
+          topOffset={insets.top ? insets.top + 70 : 90}
+        />
+      )}
 
       <SearchBar
         topOffset={insets.top || 20}
         onSelectPlace={(place) => dispatch(setDestination(place))}
+        onFocusChange={setIsSearchFocused}
       />
 
-      {distance !== null && duration !== null && (
+      {distance !== null && duration !== null && !isSearchFocused && (
         <View style={styles.bottomOverlay} pointerEvents="box-none">
           <RideSelector
             distance={distance}

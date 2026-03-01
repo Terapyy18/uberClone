@@ -20,7 +20,7 @@ interface NavState {
         price: number;
         multiplier: number;
         capacity: string;
-        image: string;
+        image: any; // ImageSourcePropType — peut être un require() local ou une URI
     } | null;
     rideHistory: Array<{
         origin: string;
