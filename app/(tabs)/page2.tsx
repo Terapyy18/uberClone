@@ -1,10 +1,22 @@
 import RideHistoryCard from '@/components/RideHistoryCard';
-import { selectDestination, selectDistance, selectDuration, selectOrigin, selectRideHistory, selectRideInfo } from '@/store/slices/navSlice';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import ActiveRide, { RidePhase } from '@/components/ride/ActiveRide';
+import RideStats from '@/components/ride/RideStats';
+import SelectedRide from '@/components/ride/SelectedRide';
+import TripOverview from '@/components/ride/TripOverview';
+import {
+  selectDestination,
+  selectDistance,
+  selectDuration,
+  selectOrigin,
+  selectRideHistory,
+  selectRideInfo,
+} from '@/store/slices/navSlice';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 
-export default function Page2Screen() {
+export default function RideDetailsScreen() {
   const origin = useSelector(selectOrigin);
   const destination = useSelector(selectDestination);
   const rideInfo = useSelector(selectRideInfo);
@@ -12,63 +24,26 @@ export default function Page2Screen() {
   const duration = useSelector(selectDuration);
   const rideHistory = useSelector(selectRideHistory);
 
+  const [phase, setPhase] = useState<RidePhase>('searching');
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f3f4f6' }}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} scrollEnabled={phase !== 'found'}>
         <Text style={styles.headerTitle}>Détails de votre course</Text>
 
-        {/* Route card */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Votre Trajet</Text>
-          <View style={styles.locationRow}>
-            <View style={styles.dot} />
-            <Text style={styles.locationText} numberOfLines={2}>
-              {origin?.description || 'Position actuelle'}
-            </Text>
-          </View>
-          <View style={styles.line} />
-          <View style={styles.locationRow}>
-            <View style={[styles.dot, { backgroundColor: 'black' }]} />
-            <Text style={styles.locationText} numberOfLines={2}>
-              {destination?.description || 'Destination inconnue'}
-            </Text>
-          </View>
-        </View>
+        {/* 1. Résumé du trajet départ/arrivée */}
+        <TripOverview
+          originDescription={origin?.description}
+          destinationDescription={destination?.description}
+        />
 
-        {/* Stats card */}
-        {distance !== null && duration !== null && (
-          <View style={styles.statsCard}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Distance</Text>
-              <Text style={styles.statValue}>{distance.toFixed(1)} km</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Temps estimé</Text>
-              <Text style={styles.statValue}>
-                {duration > 60
-                  ? `${Math.floor(duration / 60)}h ${Math.ceil(duration % 60)}m`
-                  : `${Math.ceil(duration)} min`}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Current ride info */}
+        {/* 2. Simulation et suivi chauffeur/trajet EN PREMIER (demande client) */}
         {rideInfo ? (
-          <View style={styles.rideCard}>
-            {/* Image de la voiture — grande et centrée */}
-            <Image source={rideInfo.image} style={styles.rideImage} resizeMode="contain" />
-            <View style={styles.rideInfoRow}>
-              <View style={styles.rideDetails}>
-                <Text style={styles.rideTitle}>{rideInfo.title}</Text>
-                <Text style={styles.rideCapacity}>{rideInfo.capacity}</Text>
-              </View>
-              <Text style={styles.ridePrice}>
-                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(rideInfo.price)}
-              </Text>
-            </View>
-          </View>
+          <ActiveRide
+            origin={origin}
+            destination={destination}
+            onPhaseChange={setPhase}
+          />
         ) : (
           <View style={styles.card}>
             <Text style={{ textAlign: 'center', color: '#6b7280' }}>
@@ -77,7 +52,11 @@ export default function Page2Screen() {
           </View>
         )}
 
-        {/* Ride history — uses shared component */}
+        {/* 3. Statistiques et option choisie EN DESSOUS */}
+        <RideStats distance={distance} duration={duration} />
+        <SelectedRide rideInfo={rideInfo} />
+
+        {/* 4. Historique des courses */}
         {rideHistory && rideHistory.length > 0 && (
           <View style={styles.historyContainer}>
             <Text style={styles.headerTitle}>Historique des courses</Text>
@@ -98,30 +77,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', borderRadius: 16, padding: 20, marginBottom: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#374151', marginBottom: 16 },
-  locationRow: { flexDirection: 'row', alignItems: 'center' },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#3b82f6', marginRight: 12 },
-  line: { width: 2, height: 24, backgroundColor: '#e5e7eb', marginLeft: 4, marginVertical: 4 },
-  locationText: { flex: 1, fontSize: 15, color: '#1f2937', fontWeight: '500' },
-  statsCard: {
-    backgroundColor: 'white', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 20,
-    marginBottom: 16, flexDirection: 'row', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
-  },
-  statBox: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, height: '100%', backgroundColor: '#e5e7eb', marginHorizontal: 16 },
-  statLabel: { fontSize: 12, color: '#6b7280', fontWeight: '600', textTransform: 'uppercase', marginBottom: 4 },
-  statValue: { fontSize: 18, fontWeight: '800', color: '#111827' },
-  rideCard: {
-    backgroundColor: 'white', borderRadius: 16, padding: 20, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
-    marginBottom: 16,
-  },
-  rideImage: { width: 180, height: 120, marginBottom: 12 },
-  rideInfoRow: { flexDirection: 'row', alignItems: 'center', width: '100%' },
-  rideDetails: { flex: 1 },
-  rideTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  rideCapacity: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  ridePrice: { fontSize: 22, fontWeight: '800', color: '#000' },
   historyContainer: { marginTop: 24 },
 });

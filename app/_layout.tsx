@@ -1,7 +1,19 @@
 import { supabase } from '@/lib/supabase';
+import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+
+// Configuration pour afficher systématiquement les notifications même avec l'app ouverte
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -20,6 +32,15 @@ export default function RootLayout() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Demander les permissions pour les notifications
+    const requestPermissions = async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+    };
+    requestPermissions();
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       store.dispatch(setReduxSession(session));

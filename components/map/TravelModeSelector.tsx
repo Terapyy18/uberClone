@@ -5,10 +5,9 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 type TravelMode = 'DRIVING' | 'WALKING' | 'BICYCLING' | 'TRANSIT';
 
 const MODES: { key: TravelMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { key: 'DRIVING', label: 'Voiture', icon: 'car' },
+    { key: 'DRIVING', label: 'Uber', icon: 'car' },
     { key: 'WALKING', label: 'Marche', icon: 'walk' },
     { key: 'BICYCLING', label: 'Vélo', icon: 'bicycle' },
-    { key: 'TRANSIT', label: 'Commun', icon: 'bus' },
 ];
 
 interface Props {

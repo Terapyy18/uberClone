@@ -2,11 +2,13 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import authReducer from './slices/authSlice';
 import navReducer from './slices/navSlice';
+import profileReducer from './slices/profileSlice';
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
         nav: navReducer,
+        profile: profileReducer,
     },
 });
 

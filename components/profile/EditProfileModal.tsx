@@ -1,10 +1,13 @@
 import { supabase } from '@/lib/supabase';
+import { useAppSelector } from '@/store/store';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     StyleSheet,
     Text,
     TextInput,
@@ -15,12 +18,19 @@ import {
 interface Props {
     visible: boolean;
     onClose: () => void;
-    session: any;
 }
 
-export default function EditProfileModal({ visible, onClose, session }: Props) {
-    const [displayName, setDisplayName] = useState(session?.user?.user_metadata?.full_name || '');
+export default function EditProfileModal({ visible, onClose }: Props) {
+    const { session } = useAppSelector((state) => state.auth);
+    const [displayName, setDisplayName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Sync avec la session quand le modal s'ouvre
+    useEffect(() => {
+        if (visible) {
+            setDisplayName(session?.user?.user_metadata?.full_name || '');
+        }
+    }, [visible, session]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -38,41 +48,46 @@ export default function EditProfileModal({ visible, onClose, session }: Props) {
 
     return (
         <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-            <View style={styles.overlay}>
-                <View style={styles.sheet}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Modifier mon profil</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color="#6b7280" />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+            >
+                <View style={styles.overlay}>
+                    <View style={styles.sheet}>
+                        <View style={styles.header}>
+                            <Text style={styles.title}>Modifier mon profil</Text>
+                            <TouchableOpacity onPress={onClose}>
+                                <Ionicons name="close" size={24} color="#6b7280" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.label}>Nom affiché</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={displayName}
+                            onChangeText={setDisplayName}
+                            placeholder="Votre prénom et nom"
+                            placeholderTextColor="#9ca3af"
+                        />
+
+                        <Text style={styles.label}>Email</Text>
+                        <View style={styles.inputDisabled}>
+                            <Text style={styles.inputDisabledText}>{session?.user?.email}</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.saveBtn, isSaving && { opacity: 0.7 }]}
+                            onPress={handleSave}
+                            disabled={isSaving}
+                        >
+                            {isSaving
+                                ? <ActivityIndicator color="white" />
+                                : <Text style={styles.saveBtnText}>Enregistrer</Text>
+                            }
                         </TouchableOpacity>
                     </View>
-
-                    <Text style={styles.label}>Nom affiché</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={displayName}
-                        onChangeText={setDisplayName}
-                        placeholder="Votre prénom et nom"
-                        placeholderTextColor="#9ca3af"
-                    />
-
-                    <Text style={styles.label}>Email</Text>
-                    <View style={styles.inputDisabled}>
-                        <Text style={styles.inputDisabledText}>{session?.user?.email}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.saveBtn, isSaving && { opacity: 0.7 }]}
-                        onPress={handleSave}
-                        disabled={isSaving}
-                    >
-                        {isSaving
-                            ? <ActivityIndicator color="white" />
-                            : <Text style={styles.saveBtnText}>Enregistrer</Text>
-                        }
-                    </TouchableOpacity>
                 </View>
-            </View>
+            </KeyboardAvoidingView>
         </Modal>
     );
 }

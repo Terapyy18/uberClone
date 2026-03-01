@@ -20,8 +20,8 @@ import { useAppSelector } from '@/store/store';
 import * as Location from 'expo-location';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import MapView from 'react-native-maps';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import RNMapView from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -30,7 +30,7 @@ export default function MapViewScreen() {
   const dispatch = useDispatch();
   const router = useRouter();
   const navigation = useNavigation();
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<RNMapView>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const { session } = useAppSelector((state) => state.auth);
@@ -112,6 +112,32 @@ export default function MapViewScreen() {
         onFocusChange={setIsSearchFocused}
       />
 
+      {/* Bouton pour vider la recherche */}
+      {destination && !isSearchFocused && (
+        <TouchableOpacity
+          style={[
+            styles.clearBtn,
+            { top: (insets.top || 20) + 110 },
+          ]}
+          onPress={() => {
+            dispatch(setDestination(null));
+            dispatch(setDistance(null));
+            dispatch(setDuration(null));
+            if (origin?.location) {
+              mapRef.current?.animateToRegion({
+                latitude: origin.location.lat,
+                longitude: origin.location.lng,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }, 500);
+            }
+          }}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.clearBtnText}>✕ Effacer la destination</Text>
+        </TouchableOpacity>
+      )}
+
       {distance !== null && duration !== null && !isSearchFocused && (
         <View style={styles.bottomOverlay} pointerEvents="box-none">
           <RideSelector
@@ -142,4 +168,19 @@ export default function MapViewScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   bottomOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 },
+  clearBtn: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 20,
+    backgroundColor: '#111827',
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  clearBtnText: { color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
 });

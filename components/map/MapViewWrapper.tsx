@@ -9,7 +9,7 @@ interface Props {
     origin: LocationState | null;
     destination: LocationState | null;
     travelMode: TravelMode;
-    mapRef: React.RefObject<MapView>;
+    mapRef: React.RefObject<MapView | null>;
     onRouteReady: (distance: number, duration: number, coordinates: any[]) => void;
 }
 

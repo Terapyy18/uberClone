@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
+import { useAppSelector } from '@/store/store';
 import { Ionicons } from '@expo/vector-icons';
 import { useStripe } from '@stripe/stripe-react-native';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -61,7 +63,9 @@ const formatCO2 = (dist: number) => {
     return g >= 1000 ? `${(dist * 0.12).toFixed(2)} kg` : `${Math.round(g)} g`;
 };
 
-export default function RideSelector({ distance, duration, session, origin, destination, onPaymentSuccess }: Props) {
+export default function RideSelector({ distance, duration, onPaymentSuccess }: Props) {
+    const router = useRouter();
+    const { session } = useAppSelector((state) => state.auth);
     const insets = useSafeAreaInsets();
     const [selected, setSelected] = useState<string | null>(null);
     const [isPaying, setIsPaying] = useState(false);
@@ -128,6 +132,11 @@ export default function RideSelector({ distance, duration, session, origin, dest
     }, [showSuccess]);
 
     const handleConfirm = async () => {
+        if (!session?.user) {
+            router.push('/(auth)/sign-in');
+            return;
+        }
+
         const selectedOption = uberOptions.find(opt => opt.id === selected);
         if (!selectedOption || !duration) return;
         setIsPaying(true);
