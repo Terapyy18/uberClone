@@ -1,9 +1,12 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function PrivacyPolicyScreen() {
+    const insets = useSafeAreaInsets();
     return (
         <>
-            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}>
                 <Text style={styles.updated}>Dernière mise à jour : 28 février 2026</Text>
 
                 <Section title="1. Collecte des données">

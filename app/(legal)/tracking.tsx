@@ -12,7 +12,10 @@ const STATUS_CONFIG: Record<TrackingStatus, { label: string; color: string; icon
     'undetermined': { label: 'Non défini', color: '#6b7280', icon: 'help-circle' },
 };
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function TrackingScreen() {
+    const insets = useSafeAreaInsets();
     // ATT requiert un build natif iOS — en Expo Go le statut est indisponible
     const [status] = useState<TrackingStatus>(Platform.OS === 'ios' ? 'undetermined' : 'unavailable');
 
@@ -23,7 +26,7 @@ export default function TrackingScreen() {
 
     return (
         <>
-            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}>
                 {/* Status actuel */}
                 <View style={styles.statusCard}>
                     <Ionicons name={config.icon as any} size={48} color={config.color} />

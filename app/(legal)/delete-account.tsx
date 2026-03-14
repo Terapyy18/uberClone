@@ -7,9 +7,12 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function DeleteAccountScreen() {
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState(false);
+    const insets = useSafeAreaInsets();
 
     const handleDeleteAccount = () => {
         Alert.alert(
@@ -57,7 +60,7 @@ export default function DeleteAccountScreen() {
 
     return (
         <>
-            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}>
                 {/* Icône d'avertissement */}
                 <View style={styles.warningBox}>
                     <Ionicons name="warning-outline" size={40} color="#dc2626" />
