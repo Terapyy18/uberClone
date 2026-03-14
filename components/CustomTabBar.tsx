@@ -68,7 +68,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                         >
                             {options.tabBarIcon && options.tabBarIcon({
                                 focused: isFocused,
-                                color: isFocused ? '#000000' : '#8A8A8E',
+                                color: isFocused ? '#ffffff' : '#2d2d2eff',
                                 size: 28
                             })}
                         </Pressable>
@@ -87,6 +87,8 @@ const styles = StyleSheet.create({
         right: 24,
         height: 65,
         justifyContent: 'center',
+        zIndex: 100,
+        elevation: 10,
     },
     glassContainer: {
         ...StyleSheet.absoluteFillObject,

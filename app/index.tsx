@@ -21,10 +21,8 @@ export default function Index() {
             </View>
         );
     }
-
-    // Redirect to tabs if logged in, otherwise auth
     if (session) {
-        return <Redirect href="/(tabs)/page1" />;
+        return <Redirect href="/(tabs)/MapView" />;
     } else {
         return <Redirect href="/(auth)/sign-in" />;
     }

@@ -37,7 +37,7 @@ export default function SignUpScreen() {
       if (data.user && !data.session) {
         setPendingVerification(true);
       } else if (data.session) {
-        router.replace('/(tabs)' as any);
+        router.replace('/(tabs)/MapView' as any);
       }
 
     } catch (err: any) {
@@ -65,7 +65,7 @@ export default function SignUpScreen() {
       }
 
       if (data.session) {
-        router.replace('/(tabs)' as any);
+        router.replace('/(tabs)/MapView' as any);
       } else {
         setError('Vérification réussie mais session non active. Connectez-vous.');
         setTimeout(() => router.replace('/(auth)/sign-in' as any), 2000);

@@ -29,7 +29,7 @@ export default function AuthRoutesLayout() {
   }
 
   if (session) {
-    return <Redirect href={'/(tabs)/profile'} />;
+    return <Redirect href={'/(tabs)/MapView'} />;
   }
 
   return (
