@@ -90,16 +90,17 @@ export default function SearchBar({ onSelectPlace, topOffset, onFocusChange }: P
                                 { paddingTop: insets.top + 8, transform: [{ translateY: slideAnim }] },
                             ]}
                         >
-                            {/* Ligne : bouton retour + input */}
-                            <View style={styles.searchRow}>
-                                <TouchableOpacity
-                                    onPress={handleDismiss}
-                                    style={styles.backBtn}
-                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                >
-                                    <Ionicons name="arrow-back" size={22} color="#111827" />
-                                </TouchableOpacity>
+                            {/* Bouton retour positionné en absolu à gauche, top calculé depuis insets */}
+                            <TouchableOpacity
+                                onPress={handleDismiss}
+                                style={[styles.backBtn, { top: insets.top + 11 }]}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Ionicons name="arrow-back" size={22} color="#111827" />
+                            </TouchableOpacity>
 
+                            {/* GooglePlacesAutocomplete décalé pour laisser la place au bouton */}
+                            <View style={styles.searchRow}>
                                 <GooglePlacesAutocomplete
                                     ref={placesRef}
                                     fetchDetails
@@ -248,23 +249,28 @@ const styles = StyleSheet.create({
         borderBottomColor: '#f3f4f6',
     },
 
-    /* ── Ligne bouton retour + input ── */
-    searchRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingBottom: 10,
-        gap: 10,
-    },
-
+    /* ── Bouton retour absolu à gauche ── */
     backBtn: {
+        position: 'absolute',
+        left: 12,
+        top: undefined,
+        alignSelf: 'center',
         width: 40,
         height: 40,
         borderRadius: 20,
         backgroundColor: '#f3f4f6',
         justifyContent: 'center',
         alignItems: 'center',
-        flexShrink: 0,
+        zIndex: 10,
+    },
+
+    /* ── Ligne input (décalée pour laisser la place au bouton) ── */
+    searchRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: 62,   // 12 (left) + 40 (bouton) + 10 (gap)
+        paddingRight: 12,
+        paddingBottom: 10,
     },
 
     searchIcon: {
