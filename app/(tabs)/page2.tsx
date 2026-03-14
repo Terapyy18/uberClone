@@ -10,6 +10,7 @@ import {
   selectOrigin,
   selectRideHistory,
   selectRideInfo,
+  selectTravelMode,
 } from '@/store/slices/navSlice';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -24,7 +25,10 @@ export default function RideDetailsScreen() {
   const duration = useSelector(selectDuration);
   const rideHistory = useSelector(selectRideHistory);
 
+  const travelMode = useSelector(selectTravelMode);
   const [phase, setPhase] = useState<RidePhase>('searching');
+
+  const isActiveTransport = travelMode === 'WALKING' || travelMode === 'BICYCLING';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f3f4f6' }}>
@@ -37,8 +41,18 @@ export default function RideDetailsScreen() {
           destinationDescription={destination?.description}
         />
 
-        {/* 2. Simulation et suivi chauffeur/trajet EN PREMIER (demande client) */}
-        {rideInfo ? (
+        {/* 2. Simulation chauffeur (voiture) OU vue trajet (marche/vélo) */}
+        {isActiveTransport ? (
+          /* ── Marche / Vélo : vue GPS directe ── */
+          <View style={styles.card}>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 4 }}>
+              {travelMode === 'WALKING' ? '🚶 Trajet à pied' : '🚴 Trajet en vélo'}
+            </Text>
+            <Text style={{ color: '#6b7280', fontSize: 14 }}>
+              Suivez l&apos;itinéraire affiché sur la carte.
+            </Text>
+          </View>
+        ) : rideInfo ? (
           <ActiveRide
             origin={origin}
             destination={destination}
